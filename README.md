@@ -1,1 +1,1 @@
-# apptrain
+# apptrain dockerization with Github Actions

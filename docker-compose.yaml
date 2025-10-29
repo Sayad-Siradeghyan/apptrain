@@ -1,0 +1,11 @@
+version: '1.1'
+services:
+  backend:
+    image: mydockeruser/apptrain-backend:latest
+    ports:
+      - "5000:3002"
+
+  frontend:
+    image: mydockeruser/apptrain-frontend:latest
+    ports:
+      - "3000:80"
