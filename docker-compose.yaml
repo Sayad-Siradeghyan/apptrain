@@ -1,11 +1,60 @@
-version: '1.1'
+version: "3.9"
+
 services:
   backend:
-    image: mydockeruser/apptrain-backend:latest
+    image: sayad0000/apptrain-backend:latest
+    container_name: apptrain-backend
+    restart: always
     ports:
       - "5000:3002"
+    environment:
+      # DOCKER_REPO: sayad0000
+      PORT: 3002
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: taskapp
+      DB_USER: admin
+      DB_PASSWORD: password123
+    depends_on:
+      - db
 
   frontend:
-    image: mydockeruser/apptrain-frontend:latest
+    image: sayad0000/apptrain-frontend:latest
+    container_name: apptrain-frontend
+    restart: always
     ports:
       - "3000:80"
+    depends_on:
+      - backend
+    environment:
+      # DOCKER_REPO: sayad0000
+
+  db:
+    image: postgres:16
+    container_name: apptrain-db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: taskapp
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:
+
+
+# version: '1.1'
+# services:
+#   backend:
+#     image: mydockeruser/apptrain-backend:latest
+#     ports:
+#       - "5000:3002"
+
+#   frontend:
+#     image: mydockeruser/apptrain-frontend:latest
+#     ports:
+#       - "3000:80"

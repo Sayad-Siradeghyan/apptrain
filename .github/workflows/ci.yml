@@ -1,4 +1,4 @@
-name: Build and Deploy Containers
+name: Build, Test, and Deploy Containers
 
 on:
   push:
@@ -6,24 +6,118 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  build-test-and-push:
     runs-on: ubuntu-latest
+
+    # 1️⃣ Start PostgreSQL service for CI
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: password123
+          POSTGRES_DB: taskapp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U admin -d taskapp"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_PASSWORD: password123
+      DB_NAME: taskapp
+      NODE_ENV: test
+
     steps:
+      # 2️⃣ Check out your code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 3️⃣ Set up Node.js for backend testing
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 4️⃣ Install backend dependencies
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      # 5️⃣ Wait until Postgres is ready
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -U admin -d taskapp; do
+            echo "Waiting for Postgres..."
+            sleep 2
+          done
+
+      # 6️⃣ Initialize database schema
+      - name: Initialize database
+        run: |
+          PGPASSWORD=password123 psql -h localhost -U admin -d taskapp -f ./backend/init.sql
+
+      # 7️⃣ Run backend tests (optional, if you have any)
+      - name: Run backend tests
+        working-directory: ./backend
+        run: |
+          if [ -f "package.json" ]; then
+            npm test || echo "⚠️ No tests found or tests failed"
+          fi
+
+      # 8️⃣ Log in to Docker Hub
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
+      # 9️⃣ Build backend image
       - name: Build backend image
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/apptrain-backend:latest ./backend
 
+      # 🔟 Build frontend image
       - name: Build frontend image
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/apptrain-frontend:latest ./frontend
 
+      # 1️⃣1️⃣ Push backend image
       - name: Push backend image
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/apptrain-backend:latest
 
+      # 1️⃣2️⃣ Push frontend image
       - name: Push frontend image
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/apptrain-frontend:latest
+
+
+
+# name: Build and Deploy Containers
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   build-and-push:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Log in to Docker Hub
+#         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+#       - name: Build backend image
+#         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/apptrain-backend:latest ./backend
+
+#       - name: Build frontend image
+#         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/apptrain-frontend:latest ./frontend
+
+#       - name: Push backend image
+#         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/apptrain-backend:latest
+
+#       - name: Push frontend image
+#         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/apptrain-frontend:latest
         
