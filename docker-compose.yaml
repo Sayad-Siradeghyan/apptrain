@@ -23,7 +23,7 @@ services:
     container_name: apptrain-frontend
     restart: always
     ports:
-      - "3000:80"
+      - "3003:80"
     depends_on:
       - backend
     environment:
@@ -44,7 +44,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5432:5432"
+      - "2345:5432"
 
 volumes:
   pgdata:
