@@ -27,6 +27,9 @@ services:
     depends_on:
       - backend
     environment:
+      API_URL: http://backend:3002
+      NODE_ENV: production
+
       # DOCKER_REPO: sayad0000
 
   db:
