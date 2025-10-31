@@ -29,6 +29,10 @@ services:
     environment:
       API_URL: http://backend:3002
       NODE_ENV: production
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: http://localhost:5000
 
       # DOCKER_REPO: sayad0000
 
