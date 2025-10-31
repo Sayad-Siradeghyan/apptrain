@@ -1,0 +1,18 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: http://168.119.254.41:5000
+    ports:
+      - "3003:80"
+    depends_on:
+      - backend
+
+  backend:
+    ports:
+      - "5000:3002"
+
+  db:
+    ports:
+      - "2345:5432"
